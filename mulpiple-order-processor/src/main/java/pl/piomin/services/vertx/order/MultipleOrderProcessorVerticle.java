@@ -1,5 +1,7 @@
 package pl.piomin.services.vertx.order;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -18,7 +20,7 @@ public class MultipleOrderProcessorVerticle extends AbstractVerticle {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(MultipleOrderProcessorVerticle.class);
 
-	private Order currentOrder;
+	private Map<Long, Order> ordersWaiting = new HashMap<>();
 	
 	public static void main(String[] args) {
 		Vertx vertx = Vertx.vertx();
@@ -55,15 +57,15 @@ public class MultipleOrderProcessorVerticle extends AbstractVerticle {
 		consumer.handler(record -> {
 			LOGGER.info("Processing: key={}, value={}, partition={}, offset={}", record.key(), record.value(), record.partition(), record.offset());
 			Order order = Json.decodeValue(record.value(), Order.class);
-			if (currentOrder != null && currentOrder.getRelatedOrderId().equals(record.offset())) {
+			if (ordersWaiting.containsKey(record.offset())) {
 				LOGGER.info("Related order found: id={}, price={}", order.getId(), order.getPrice());
-				LOGGER.info("Current price: price={}", order.getPrice() + currentOrder.getPrice());
-				currentOrder = null;
-				order = null;
+				LOGGER.info("Current price: price={}", order.getPrice() + ordersWaiting.get(record.offset()).getPrice());
 				consumer.seekToEnd(tp);
-			} else if (order != null && order.getRelatedOrderId() != null) {
-				currentOrder = order;
-				consumer.seek(tp, currentOrder.getRelatedOrderId());
+			}
+			
+			if (order.getRelatedOrderId() != null && !ordersWaiting.containsKey(order.getRelatedOrderId())) {
+				ordersWaiting.put(order.getRelatedOrderId(), order);
+				consumer.seek(tp, order.getRelatedOrderId());
 			}
 		});
 	}
