@@ -9,20 +9,16 @@ import org.slf4j.LoggerFactory;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.Json;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
-import pl.piomin.services.vertx.order.model.Order;
 
-public class MultipleOrderProcessorVerticle extends AbstractVerticle {
+public class SingleOrderProcessorVerticle extends AbstractVerticle {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(MultipleOrderProcessorVerticle.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(SingleOrderProcessorVerticle.class);
 
-	private Order currentOrder;
-	
 	public static void main(String[] args) {
 		Vertx vertx = Vertx.vertx();
-		vertx.deployVerticle(new MultipleOrderProcessorVerticle());
+		vertx.deployVerticle(new SingleOrderProcessorVerticle());
 	}
 
 	@Override
@@ -31,9 +27,10 @@ public class MultipleOrderProcessorVerticle extends AbstractVerticle {
 		config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "192.168.99.100:9092");
 		config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 		config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-		config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+		config.put(ConsumerConfig.GROUP_ID_CONFIG, "order");
+		config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 		config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
-		TopicPartition tp = new TopicPartition().setPartition(1).setTopic("orders-out");
+		TopicPartition tp = new TopicPartition().setPartition(0).setTopic("orders-out");
 		KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
 		consumer.assign(tp, ar -> {
 			if (ar.succeeded()) {
@@ -43,8 +40,6 @@ public class MultipleOrderProcessorVerticle extends AbstractVerticle {
 						for (TopicPartition topicPartition : done1.result()) {
 							LOGGER.info("Partition: topic={}, number={}", topicPartition.getTopic(), topicPartition.getPartition());
 						}
-					} else {
-						LOGGER.error("Could not assign partition: err={}", done1.cause().getMessage());
 					}
 				});
 			} else {
@@ -54,17 +49,6 @@ public class MultipleOrderProcessorVerticle extends AbstractVerticle {
 
 		consumer.handler(record -> {
 			LOGGER.info("Processing: key={}, value={}, partition={}, offset={}", record.key(), record.value(), record.partition(), record.offset());
-			Order order = Json.decodeValue(record.value(), Order.class);
-			if (currentOrder != null && currentOrder.getRelatedOrderId().equals(record.offset())) {
-				LOGGER.info("Related order found: id={}, price={}", order.getId(), order.getPrice());
-				LOGGER.info("Current price: price={}", order.getPrice() + currentOrder.getPrice());
-				currentOrder = null;
-				order = null;
-				consumer.seekToEnd(tp);
-			} else if (order != null && order.getRelatedOrderId() != null) {
-				currentOrder = order;
-				consumer.seek(tp, currentOrder.getRelatedOrderId());
-			}
 		});
 	}
 

@@ -45,7 +45,7 @@ public class OrderVerticle extends AbstractVerticle {
 		router.route(HttpMethod.POST, "/order").handler(BodyHandler.create());
 		router.post("/order").produces("application/json").handler(rc -> {
 			Order o = Json.decodeValue(rc.getBodyAsString(), Order.class);
-			KafkaProducerRecord<String, JsonObject> record = KafkaProducerRecord.create("orders", null, rc.getBodyAsJson(), o.getType().ordinal());
+			KafkaProducerRecord<String, JsonObject> record = KafkaProducerRecord.create("orders-out", null, rc.getBodyAsJson(), o.getType().ordinal());
 			producer.write(record, done -> {
 				if (done.succeeded()) {
 					RecordMetadata recordMetadata = done.result();

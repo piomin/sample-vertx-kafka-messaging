@@ -6,6 +6,7 @@ public class Order {
 	private OrderType type;
 	private OrderStatus status;
 	private int price;
+	private Long relatedOrderId;
 
 	public Long getId() {
 		return id;
@@ -37,6 +38,14 @@ public class Order {
 
 	public void setPrice(int price) {
 		this.price = price;
+	}
+
+	public Long getRelatedOrderId() {
+		return relatedOrderId;
+	}
+
+	public void setRelatedOrderId(Long relatedOrderId) {
+		this.relatedOrderId = relatedOrderId;
 	}
 
 }
