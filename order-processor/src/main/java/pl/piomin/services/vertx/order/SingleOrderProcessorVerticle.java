@@ -28,7 +28,7 @@ public class SingleOrderProcessorVerticle extends AbstractVerticle {
 		config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 		config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 		config.put(ConsumerConfig.GROUP_ID_CONFIG, "order");
-		config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+		config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
 		config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 		TopicPartition tp = new TopicPartition().setPartition(0).setTopic("orders-out");
 		KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
