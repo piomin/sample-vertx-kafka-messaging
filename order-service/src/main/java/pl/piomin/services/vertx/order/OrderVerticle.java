@@ -39,6 +39,9 @@ public class OrderVerticle extends AbstractVerticle {
 		config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonObjectSerializer.class);
 		config.put(ProducerConfig.ACKS_CONFIG, "1");
 		KafkaProducer<String, JsonObject> producer = KafkaProducer.create(vertx, config);
+		producer.partitionsFor("orders-out", done -> {
+			done.result().forEach(p -> LOGGER.info("Partition: id={}, topic={}", p.getPartition(), p.getTopic()));
+		});
 		
 		Router router = Router.router(vertx);
 		router.route("/order/*").handler(ResponseContentTypeHandler.create());

@@ -29,7 +29,7 @@ public class AllOrderProcessorVerticle extends AbstractVerticle {
 		config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "192.168.99.100:9092");
 		config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 		config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-		config.put(ConsumerConfig.GROUP_ID_CONFIG, "all-orders");
+		config.put(ConsumerConfig.GROUP_ID_CONFIG, "all-order");
 		config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
 		config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 		KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);

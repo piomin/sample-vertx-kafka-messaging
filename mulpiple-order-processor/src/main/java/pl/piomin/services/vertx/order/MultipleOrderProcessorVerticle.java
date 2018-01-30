@@ -33,6 +33,7 @@ public class MultipleOrderProcessorVerticle extends AbstractVerticle {
 		config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "192.168.99.100:9092");
 		config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 		config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+		config.put(ConsumerConfig.GROUP_ID_CONFIG, "multiple-order");
 		config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
 		config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 		TopicPartition tp = new TopicPartition().setPartition(1).setTopic("orders-out");
