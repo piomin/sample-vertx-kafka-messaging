@@ -8,6 +8,10 @@
 	</parent>
 	<artifactId>order-processor</artifactId>
 
+	<properties>
+		<sonar.moduleKey>${project.artifactId}</sonar.moduleKey>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>io.vertx</groupId>
