@@ -1,12 +1,5 @@
 package pl.piomin.services.vertx.order;
 
-import java.util.Properties;
-
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.StringSerializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
@@ -17,10 +10,15 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
-import io.vertx.kafka.client.producer.RecordMetadata;
 import io.vertx.kafka.client.serialization.JsonObjectSerializer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pl.piomin.services.vertx.order.model.Order;
 import pl.piomin.services.vertx.order.model.OrderStatus;
+
+import java.util.Properties;
 
 public class OrderVerticle extends AbstractVerticle {
 
@@ -49,21 +47,18 @@ public class OrderVerticle extends AbstractVerticle {
         router.post("/order").produces("application/json").handler(rc -> {
             Order o = Json.decodeValue(rc.getBodyAsString(), Order.class);
             KafkaProducerRecord<String, JsonObject> record = KafkaProducerRecord.create("orders-out", null, rc.getBodyAsJson(), o.getType().ordinal());
-            producer.write(record, done -> {
-                if (done.succeeded()) {
-                    RecordMetadata recordMetadata = done.result();
-                    LOGGER.info("Record sent: msg={}, destination={}, partition={}, offset={}", record.value(), recordMetadata.getTopic(), recordMetadata.getPartition(), recordMetadata.getOffset());
-                    o.setId(recordMetadata.getOffset());
-                    o.setStatus(OrderStatus.PROCESSING);
-                } else {
-                    Throwable t = done.cause();
-                    LOGGER.error("Error sent to topic: {}", t.getMessage());
-                    o.setStatus(OrderStatus.REJECTED);
-                }
+            producer.send(record).onSuccess(recordMetadata -> {
+                LOGGER.info("Record sent: msg={}, destination={}, partition={}, offset={}", record.value(), recordMetadata.getTopic(), recordMetadata.getPartition(), recordMetadata.getOffset());
+                o.setId(recordMetadata.getOffset());
+                o.setStatus(OrderStatus.PROCESSING);
                 rc.response().end(Json.encodePrettily(o));
+            }).onFailure(err -> {
+                Throwable t = err.getCause();
+                LOGGER.error("Error sent to topic: {}", t.getMessage());
+                o.setStatus(OrderStatus.REJECTED);
             });
         });
-        vertx.createHttpServer().requestHandler(router::accept).listen(8090);
+        vertx.createHttpServer().requestHandler(router).listen(8090);
 
     }
 
