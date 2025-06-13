@@ -1,3 +1,7 @@
+## Partitioning with Apache Kafka and Vert.x
+
+Detailed description can be found here: [Partitioning with Apache Kafka and Vert.x](https://piotrminkowski.com/2018/01/30/partitioning-with-apache-kafka-and-vertx/) 
+
 # Vert.x + Kafka — Order Processing Demo
 
 A demonstration of using Eclipse Vert.x with Apache Kafka for an order processing pipeline. The `order-service` module exposes a REST endpoint to submit orders, which are sent to a Kafka topic; multiple consumer verticles process orders from different partitions to illustrate ordered and parallel consumption.
